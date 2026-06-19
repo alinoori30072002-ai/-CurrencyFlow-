@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CurrencyFlow – Währungsrechner</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #0F0F1A; color: #F1F5F9; min-height: 100vh; }
+nav { background: rgba(15,15,26,0.95); border-bottom: 1px solid rgba(124,58,237,0.2); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, #7C3AED, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-sub { font-size: 0.78rem; color: #64748B; }
+.status { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 20px; background: rgba(52,211,153,0.1); color: #34D399; border: 1px solid rgba(52,211,153,0.2); }
+.main { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
+.converter-card { background: #1A1A2E; border: 1px solid rgba(124,58,237,0.2); border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem; }
+.card-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7C3AED; margin-bottom: 1.5rem; }
+.input-group { margin-bottom: 1rem; }
+.input-label { font-size: 0.82rem; color: #94A3B8; margin-bottom: 0.4rem; }
+.input-row { display: flex; gap: 0.75rem; align-items: center; }
+.amount-input { flex: 1; background: #0F0F1A; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 0.75rem 1rem; color: #F1F5F9; font-size: 1.2rem; font-weight: 600; outline: none; transition: border-color 0.2s; font-family: 'Segoe UI', sans-serif; }
+.amount-input:focus { border-color: rgba(124,58,237,0.5); }
+.currency-select { background: #0F0F1A; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 0.75rem 1rem; color: #F1F5F9; font-size: 0.85rem; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; min-width: 160px; }
+.swap-btn { width: 100%; padding: 0.6rem; background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); border-radius: 10px; color: #A78BFA; cursor: pointer; font-size: 1.2rem; transition: all 0.2s; margin: 0.75rem 0; font-family: 'Segoe UI', sans-serif; }
+.swap-btn:hover { background: rgba(124,58,237,0.2); }
+.result-box { background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 1.2rem 1.5rem; text-align: center; margin-top: 1rem; display: none; }
+.result-amount { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #7C3AED, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.result-rate { font-size: 0.82rem; color: #64748B; margin-top: 0.25rem; }
+.popular-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+.popular-card { background: #1A1A2E; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+.popular-card:hover { border-color: rgba(124,58,237,0.3); }
+.popular-flag { font-size: 1.5rem; margin-bottom: 0.3rem; }
+.popular-pair { font-size: 0.78rem; color: #64748B; margin-bottom: 0.25rem; }
+.popular-rate { font-size: 0.9rem; font-weight: 600; color: #F1F5F9; }
+.history-card { background: #1A1A2E; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.5rem; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; }
+.history-item:last-child { border-bottom: none; }
+.history-from { color: #94A3B8; }
+.history-to { color: #A78BFA; font-weight: 600; }
+.history-time { font-size: 0.75rem; color: #64748B; }
+.section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7C3AED; margin-bottom: 1rem; }
+.search-input { width: 100%; background: #0F0F1A; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem 0.75rem; color: #F1F5F9; font-size: 0.85rem; outline: none; margin-bottom: 0.5rem; font-family: 'Segoe UI', sans-serif; }
+.search-input:focus { border-color: rgba(124,58,237,0.5); }
+.currency-count { font-size: 0.75rem; color: #64748B; margin-bottom: 0.5rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div>
+    <div class="logo">💱 CurrencyFlow</div>
+    <div class="nav-sub">Live Wechselkurse · 170+ Währungen · Kostenlos</div>
+  </div>
+  <span class="status" id="statusBadge">⏳ Lädt...</span>
+</nav>
+
+<div class="main">
+
+  <div class="section-title">🔥 Beliebte Währungspaare</div>
+  <div class="popular-grid">
+    <div class="popular-card" onclick="setQuick('USD','EUR')"><div class="popular-flag">🇺🇸🇪🇺</div><div class="popular-pair">USD → EUR</div><div class="popular-rate" id="pop-USD-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('GBP','EUR')"><div class="popular-flag">🇬🇧🇪🇺</div><div class="popular-pair">GBP → EUR</div><div class="popular-rate" id="pop-GBP-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('JPY','EUR')"><div class="popular-flag">🇯🇵🇪🇺</div><div class="popular-pair">JPY → EUR</div><div class="popular-rate" id="pop-JPY-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('CHF','EUR')"><div class="popular-flag">🇨🇭🇪🇺</div><div class="popular-pair">CHF → EUR</div><div class="popular-rate" id="pop-CHF-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('TRY','EUR')"><div class="popular-flag">🇹🇷🇪🇺</div><div class="popular-pair">TRY → EUR</div><div class="popular-rate" id="pop-TRY-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('CNY','EUR')"><div class="popular-flag">🇨🇳🇪🇺</div><div class="popular-pair">CNY → EUR</div><div class="popular-rate" id="pop-CNY-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('SAR','EUR')"><div class="popular-flag">🇸🇦🇪🇺</div><div class="popular-pair">SAR → EUR</div><div class="popular-rate" id="pop-SAR-EUR">...</div></div>
+    <div class="popular-card" onclick="setQuick('AED','EUR')"><div class="popular-flag">🇦🇪🇪🇺</div><div class="popular-pair">AED → EUR</div><div class="popular-rate" id="pop-AED-EUR">...</div></div>
+  </div>
+
+  <div class="converter-card">
+    <div class="card-title">💱 Währung umrechnen</div>
+
+    <div class="input-group">
+      <div class="input-label">Betrag & Ausgangswährung</div>
+      <div class="input-row">
+        <input type="number" class="amount-input" id="amountInput" value="1" min="0" step="any" oninput="convertCurrency()">
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          <input type="text" class="search-input" id="searchFrom" placeholder="🔍 Suchen..." oninput="filterSelect('fromCurrency', this.value)" style="margin-bottom:0;min-width:160px;">
+          <select class="currency-select" id="fromCurrency" onchange="convertCurrency()" size="1"></select>
+        </div>
+      </div>
+    </div>
+
+    <button class="swap-btn" onclick="swapCurrencies()">⇅ Tauschen</button>
+
+    <div class="input-group">
+      <div class="input-label">Ergebnis & Zielwährung</div>
+      <div class="input-row">
+        <input type="number" class="amount-input" id="resultInput" readonly style="opacity:0.7;">
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          <input type="text" class="search-input" id="searchTo" placeholder="🔍 Suchen..." oninput="filterSelect('toCurrency', this.value)" style="margin-bottom:0;min-width:160px;">
+          <select class="currency-select" id="toCurrency" onchange="convertCurrency()" size="1"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-amount" id="resultAmount"></div>
+      <div class="result-rate" id="resultRate"></div>
+      <div style="font-size:0.75rem;color:#64748B;margin-top:0.5rem;" id="lastUpdate"></div>
+    </div>
+  </div>
+
+  <div class="history-card">
+    <div class="section-title">🕐 Letzte Umrechnungen</div>
+    <div id="historyList"><div style="text-align:center;color:#64748B;font-size:0.85rem;padding:1rem;">Noch keine Umrechnungen</div></div>
+  </div>
+
+</div>
+
+<script>
+const FLAGS = {
+  AUD:'🇦🇺',BGN:'🇧🇬',BRL:'🇧🇷',CAD:'🇨🇦',CHF:'🇨🇭',CNY:'🇨🇳',CZK:'🇨🇿',DKK:'🇩🇰',
+  EUR:'🇪🇺',GBP:'🇬🇧',HKD:'🇭🇰',HUF:'🇭🇺',IDR:'🇮🇩',ILS:'🇮🇱',INR:'🇮🇳',ISK:'🇮🇸',
+  JPY:'🇯🇵',KRW:'🇰🇷',MXN:'🇲🇽',MYR:'🇲🇾',NOK:'🇳🇴',NZD:'🇳🇿',PHP:'🇵🇭',PLN:'🇵🇱',
+  RON:'🇷🇴',SEK:'🇸🇪',SGD:'🇸🇬',THB:'🇹🇭',TRY:'🇹🇷',USD:'🇺🇸',ZAR:'🇿🇦',
+  AED:'🇦🇪',SAR:'🇸🇦',QAR:'🇶🇦',KWD:'🇰🇼',BHD:'🇧🇭',OMR:'🇴🇲',EGP:'🇪🇬',
+  MAD:'🇲🇦',NGN:'🇳🇬',KES:'🇰🇪',GHS:'🇬🇭',TZS:'🇹🇿',UGX:'🇺🇬',ETB:'🇪🇹',
+  PKR:'🇵🇰',BDT:'🇧🇩',LKR:'🇱🇰',NPR:'🇳🇵',AFN:'🇦🇫',
+  VND:'🇻🇳',TWD:'🇹🇼',MMK:'🇲🇲',KHR:'🇰🇭',MNT:'🇲🇳',
+  ARS:'🇦🇷',CLP:'🇨🇱',COP:'🇨🇴',PEN:'🇵🇪',UYU:'🇺🇾',BOB:'🇧🇴',PYG:'🇵🇾',VES:'🇻🇪',
+  HRK:'🇭🇷',RSD:'🇷🇸',BAM:'🇧🇦',MKD:'🇲🇰',ALL:'🇦🇱',
+  UAH:'🇺🇦',GEL:'🇬🇪',AMD:'🇦🇲',AZN:'🇦🇿',KZT:'🇰🇿',UZS:'🇺🇿',
+  DZD:'🇩🇿',TND:'🇹🇳',LYD:'🇱🇾',SDG:'🇸🇩',
+  IQD:'🇮🇶',JOD:'🇯🇴',LBP:'🇱🇧',SYP:'🇸🇾',YER:'🇾🇪',
+  CRC:'🇨🇷',GTQ:'🇬🇹',HNL:'🇭🇳',NIO:'🇳🇮',PAB:'🇵🇦',DOP:'🇩🇴',CUP:'🇨🇺',
+  BWP:'🇧🇼',ZMW:'🇿🇲',MZN:'🇲🇿',NAD:'🇳🇦',
+  MUR:'🇲🇺',SCR:'🇸🇨',MVR:'🇲🇻',
+  ISK:'🇮🇸',
+};
+
+const NAMES = {
+  AUD:'Austral. Dollar',BGN:'Bulgar. Lew',BRL:'Brasil. Real',CAD:'Kanad. Dollar',
+  CHF:'Schweizer Fr.',CNY:'Chin. Yuan',CZK:'Tschech. Krone',DKK:'Dän. Krone',
+  EUR:'Euro',GBP:'Brit. Pfund',HKD:'Hongkong Dollar',HUF:'Ungar. Forint',
+  IDR:'Indones. Rupiah',ILS:'Israel. Schekel',INR:'Ind. Rupie',ISK:'Island. Krone',
+  JPY:'Jap. Yen',KRW:'Südkor. Won',MXN:'Mexik. Peso',MYR:'Malays. Ringgit',
+  NOK:'Norweg. Krone',NZD:'Neuseel. Dollar',PHP:'Philipp. Peso',PLN:'Poln. Zloty',
+  RON:'Rumän. Leu',SEK:'Schwed. Krone',SGD:'Singapur Dollar',THB:'Thai. Baht',
+  TRY:'Türk. Lira',USD:'US Dollar',ZAR:'Südafrik. Rand',
+  AED:'VAE Dirham',SAR:'Saudi Riyal',QAR:'Katar Riyal',KWD:'Kuwait. Dinar',
+  BHD:'Bahrain. Dinar',OMR:'Oman. Rial',EGP:'Ägypt. Pfund',
+  MAD:'Marokkan. Dirham',NGN:'Nigerian. Naira',KES:'Kenia. Schilling',
+  PKR:'Pakist. Rupie',BDT:'Banglad. Taka',LKR:'Sri Lanka Rupie',
+  VND:'Vietnam. Dong',TWD:'Taiwan Dollar',
+  ARS:'Argentin. Peso',CLP:'Chilenisch. Peso',COP:'Kolumbian. Peso',PEN:'Peruanisch. Sol',
+  UAH:'Ukrain. Hrywnja',GEL:'Georg. Lari',KZT:'Kasach. Tenge',
+  DZD:'Algerien. Dinar',TND:'Tunesisch. Dinar',
+  IQD:'Irak. Dinar',JOD:'Jordan. Dinar',
+  CRC:'Costa-Ric. Colón',DOP:'Domin. Peso',
+};
+
+let rates = {};
+let allCurrencies = [];
+let history = [];
+
+async function fetchRates() {
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?from=EUR');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    rates = { EUR: 1, ...data.rates };
+    allCurrencies = Object.keys(rates).sort();
+    document.getElementById('statusBadge').textContent = `✅ ${allCurrencies.length} Währungen`;
+    document.getElementById('statusBadge').style.color = '#34D399';
+    if (data.date) document.getElementById('lastUpdate') && (document.getElementById('lastUpdate').textContent = `Kurse vom ${data.date}`);
+    populateSelects();
+    updatePopularRates();
+    convertCurrency();
+  } catch(e) {
+    try {
+      const res2 = await fetch('https://open.er-api.com/v6/latest/EUR');
+      const data2 = await res2.json();
+      rates = { EUR: 1, ...data2.rates };
+      allCurrencies = Object.keys(rates).sort();
+      document.getElementById('statusBadge').textContent = `✅ ${allCurrencies.length} Währungen`;
+      populateSelects();
+      updatePopularRates();
+      convertCurrency();
+    } catch(e2) {
+      document.getElementById('statusBadge').textContent = '❌ Offline';
+      document.getElementById('statusBadge').style.color = '#F87171';
+    }
+  }
+}
+
+function getCurrencyLabel(code) {
+  const flag = FLAGS[code] || '🏳️';
+  const name = NAMES[code] || code;
+  return `${flag} ${code} – ${name}`;
+}
+
+function populateSelects() {
+  const fromSel = document.getElementById('fromCurrency');
+  const toSel = document.getElementById('toCurrency');
+  fromSel.innerHTML = '';
+  toSel.innerHTML = '';
+  allCurrencies.forEach(code => {
+    fromSel.add(new Option(getCurrencyLabel(code), code));
+    toSel.add(new Option(getCurrencyLabel(code), code));
+  });
+  fromSel.value = 'EUR';
+  toSel.value = 'USD';
+}
+
+function filterSelect(selectId, search) {
+  const sel = document.getElementById(selectId);
+  const current = sel.value;
+  sel.innerHTML = '';
+  const filtered = allCurrencies.filter(c =>
+    c.toLowerCase().includes(search.toLowerCase()) ||
+    (NAMES[c] || '').toLowerCase().includes(search.toLowerCase())
+  );
+  filtered.forEach(code => sel.add(new Option(getCurrencyLabel(code), code)));
+  if (filtered.includes(current)) sel.value = current;
+  else if (filtered.length > 0) sel.value = filtered[0];
+  convertCurrency();
+}
+
+function updatePopularRates() {
+  [['USD','EUR'],['GBP','EUR'],['JPY','EUR'],['CHF','EUR'],['TRY','EUR'],['CNY','EUR'],['SAR','EUR'],['AED','EUR']].forEach(([from, to]) => {
+    const el = document.getElementById(`pop-${from}-${to}`);
+    if (el && rates[from] && rates[to]) el.textContent = (rates[to] / rates[from]).toFixed(4);
+  });
+}
+
+function convertCurrency() {
+  const amount = parseFloat(document.getElementById('amountInput').value);
+  const from = document.getElementById('fromCurrency').value;
+  const to = document.getElementById('toCurrency').value;
+  if (!amount || !rates[from] || !rates[to]) return;
+  const result = (amount / rates[from]) * rates[to];
+  const rate = rates[to] / rates[from];
+  document.getElementById('resultInput').value = result.toFixed(4);
+  document.getElementById('resultBox').style.display = 'block';
+  document.getElementById('resultAmount').textContent = `${result.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:4})} ${to}`;
+  document.getElementById('resultRate').textContent = `1 ${from} = ${rate.toFixed(6)} ${to}`;
+}
+
+function swapCurrencies() {
+  const fromSel = document.getElementById('fromCurrency');
+  const toSel = document.getElementById('toCurrency');
+  const temp = fromSel.value;
+  fromSel.value = toSel.value;
+  toSel.value = temp;
+  const resultVal = document.getElementById('resultInput').value;
+  if (resultVal) document.getElementById('amountInput').value = parseFloat(resultVal).toFixed(2);
+  convertCurrency();
+}
+
+function setQuick(from, to) {
+  filterSelect('fromCurrency', '');
+  filterSelect('toCurrency', '');
+  document.getElementById('searchFrom').value = '';
+  document.getElementById('searchTo').value = '';
+  document.getElementById('fromCurrency').value = from;
+  document.getElementById('toCurrency').value = to;
+  document.getElementById('amountInput').value = 1;
+  convertCurrency();
+  document.getElementById('converter-card') && document.getElementById('converter-card').scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('amountInput').addEventListener('change', () => {
+  const amount = document.getElementById('amountInput').value;
+  const from = document.getElementById('fromCurrency').value;
+  const to = document.getElementById('toCurrency').value;
+  const result = document.getElementById('resultInput').value;
+  if (amount && result) {
+    history.unshift({ from, to, amount, result, fromFlag: FLAGS[from]||'🏳️', toFlag: FLAGS[to]||'🏳️', time: new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) });
+    if (history.length > 5) history.pop();
+    document.getElementById('historyList').innerHTML = history.map(h => `
+      <div class="history-item">
+        <span class="history-from">${h.fromFlag} ${parseFloat(h.amount).toLocaleString('de-DE')} ${h.from}</span>
+        <span style="color:#64748B;">→</span>
+        <span class="history-to">${h.toFlag} ${parseFloat(h.result).toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:4})} ${h.to}</span>
+        <span class="history-time">${h.time}</span>
+      </div>`).join('');
+  }
+});
+
+fetchRates();
+setInterval(fetchRates, 60000);
+</script>
+</body>
+</html>
